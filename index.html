@@ -6349,7 +6349,8 @@ async function doMint(){
   var left = qty;
   while (left > 0) { var b = left > perBatch ? perBatch : left; batches.push(b); left -= b; }
   $("forgePicked").textContent = fmt(qty);
-  batchRunner("盲盒抽卡 " + fmt(qty) + " 件（分 " + batches.length + " 批）", batches, async function(b){
+  batchRunner("盲盒抽卡 " + fmt(qty) + " 件（分 " + batches.length + " 批）", batches, async function(slice){
+    var b = slice[0];
     var tx = await circ.mint(b, { value: fee * BigInt(b) });
     var rc = await tx.wait();
     if (rc.status !== 1) throw new Error("交易失败");
