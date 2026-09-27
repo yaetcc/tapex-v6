@@ -5451,38 +5451,30 @@ input:focus,textarea:focus,select:focus{
   <!-- 左：操作区 -->
   <div>
     <div class="card" id="mint">
-      <div class="kicker" data-i18n="Step 1 · OKB 铸造 PC 整机">Step 1 · OKB 铸造 PC 整机</div>
-      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 7h4v4H7zM13 13h4v4h-4zM7 17l10-10"/></svg>OKB 铸造：直接铸 PC NFT（品质自选）</h3>
-      <p class="sub" data-i18n="花 OKB 直接铸造整机 PC NFT（档位 1–5，算力随档位提升）。铸造消耗 档位×8 个硬件部件，费用全额进入平台地址。">花 OKB 直接铸造整机 PC NFT（档位 1–5，算力随档位提升）。铸造消耗 档位×8 个硬件部件，费用全额进入平台地址。</p>
+      <div class="kicker" data-i18n="Step 1 · OKB 盲盒抽部件">Step 1 · OKB 盲盒抽部件</div>
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 7h4v4H7zM13 13h4v4h-4zM7 17l10-10"/></svg>盲盒铸造：随机抽 1 件硬件</h3>
+      <p class="sub">花 OKB 随机抽取硬件部件（CPU / 主板 / GPU / 内存 / SSD / 电源 / 散热 / 机箱），抽到即可用于组装 PC。费用全部进入平台收款地址。</p>
       <div class="mint-qty">
-        <select id="mintPid" style="flex:1;min-width:0;background:#0d1830;color:var(--tx);border:1px solid var(--line);border-radius:var(--r-in);padding:9px 10px;font-size:13px">
-          <option value="1">档位 1 · 标准（算力 100H）</option>
-          <option value="2">档位 2（算力 200H）</option>
-          <option value="3">档位 3 · Pro（算力 300H）</option>
-          <option value="4">档位 4（算力 400H）</option>
-          <option value="5">档位 5 · 旗舰（算力 500H）</option>
-        </select>
-        <input type="number" id="mintAmt" min="1" max="100" value="1" placeholder="数量">
-        <span class="mq-grp"><button class="mq" data-n="1">1</button><button class="mq" data-n="5">5</button><button class="mq" data-n="10">10</button></span>
+        <input type="number" id="mintAmt" min="1" max="100000" value="10" placeholder="抽取数量">
+        <span class="mq-grp"><button class="mq" data-n="1">1</button><button class="mq" data-n="10">10</button><button class="mq" data-n="100">100</button><button class="mq" data-n="1000">1000</button></span>
       </div>
       <div class="price-line">应付 <b id="mintPrice">—</b><span class="mint-note" id="mintNote"></span></div>
-      <div class="price-line sub">单台 <b>0.01 OKB</b> · 铸造费收款 <span class="mono" id="feeRecv" style="color:var(--teal)">0x3e85…104c</span></div>
+      <div class="price-line sub">单件 <b>0.001 OKB</b> · 费用收款 <span class="mono" id="feeRecv" style="color:var(--teal)">0x3e85…104c</span></div>
       <div class="forge" id="forge">
         <div class="forge-track">
-          <div class="slot sl-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7l8-4 8 4v10l-8 4-8-4z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg><b id="forgePicked">0</b><span data-i18n="已铸">已铸</span></div>
-          <div class="core" id="forgeCore"><div class="bb" id="bbBox"><div class="bb-lid"><span>TAPEX</span></div><div class="bb-body"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 11l3-6 2 5 3-7-1 8H9z"/><path d="M7 15h9"/></svg><span data-i18n="点击铸造">点击铸造</span></div></div><div class="bb-beam" id="bbBeam"></div></div>
+          <div class="slot sl-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7l8-4 8 4v10l-8 4-8-4z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg><b id="forgePicked">0</b><span data-i18n="已抽">已抽</span></div>
+          <div class="core" id="forgeCore"><div class="bb" id="bbBox"><div class="bb-lid"><span>TAPEX</span></div><div class="bb-body"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 11l3-6 2 5 3-7-1 8H9z"/><path d="M7 15h9"/></svg><span data-i18n="点击抽卡">点击抽卡</span></div></div><div class="bb-beam" id="bbBeam"></div></div>
           <div class="slot sl-box sl-own" id="forgeOwnSlot" title="点击查看全部部件"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7l8-4 8 4v10l-8 4-8-4z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg><b id="forgeTotal">0</b><span data-i18n="拥有">拥有</span></div>
         </div>
         <div class="fly-parts" id="flyParts"><span class="part pn"></span><span class="part pn"></span><span class="part pl"></span><span class="part pl"></span></div>
       </div>
       <div class="msg" id="mintMsg"></div>
-      <p class="hint">主网 OKB 可从 OKX 交易所提现转入（网络选 X Layer）。批量铸造自动按每笔 10 台分批，减少钱包反复签名；铸造需账户持有足够硬件部件。</p>
+      <p class="hint">主网 OKB 可从 OKX 交易所提现转入（网络选 X Layer）。抽卡 0.001 OKB/件，随机抽不保证稀有件；单次操作上限 100,000 件，自动按每笔 5,000 件分批铸造，减少钱包反复签名。</p>
     </div>
-
     <div class="card" id="asm">
       <div class="kicker" data-i18n="Step 2 · 组装电脑">Step 2 · 组装电脑</div>
       <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5l16 14V5"/></svg>组装流片：8 类部件 → 整机 PC NFT</h3>
-      <p class="sub" data-i18n="消耗 档位×8 个部件 + 组装费（0.05 XCHIP/台）组装成整机 NFT。自选档位 1–5，低档优先烧。">消耗 档位×8 个部件 + 组装费（0.05 XCHIP/台）组装成整机 NFT。自选档位 1–5，低档优先烧。</p>
+      <p class="sub" data-i18n="集齐 8 类部件各 1 件即可组装成整机 NFT（自动消耗每类 1 件）。组装费 0.05 XCHIP/台，档位 1–5 随机，算力随档位提升。费用全部进入平台收款地址。">集齐 8 类部件各 1 件即可组装成整机 NFT（自动消耗每类 1 件）。组装费 0.05 XCHIP/台，档位 1–5 随机，算力随档位提升。费用全部进入平台收款地址。</p>
       <div class="parts-grid" id="partsGrid"></div>
       <div class="bench" id="bench"></div>
       <div class="msg" id="toMsg"></div>
@@ -5493,8 +5485,8 @@ input:focus,textarea:focus,select:focus{
         <div class="f-plate" id="fPlate"><span class="fph" id="fPlateHint" data-i18n="8 类部件 → 组装台">8 类部件 → 组装台</span><b id="fPlateChip" style="display:none"></b></div>
       </div>
       <div class="burst" id="burst"><div class="bx"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor"><circle cx="32" cy="32" r="25" stroke-width="2.5"/><circle cx="32" cy="32" r="9" fill="currentColor"/><path d="M32 7v10M32 47v10M7 32h10M47 32h10" stroke-width="2" opacity=".7"/></svg><span data-i18n="PC NFT 组装完成">PC NFT 组装完成</span></div></div>
-      <span class="asm-tier"><select id="asmTier"><option value="1">档位 1 · 标准（算力 150H）</option><option value="2">档位 2（算力 250H）</option><option value="3">档位 3 · Pro（算力 350H）</option><option value="4">档位 4（算力 450H）</option><option value="5">档位 5 · 旗舰（算力 550H）</option></select></span><button class="action-btn" id="assembleBtn" data-i18n="组装 1 台">组装 1 台</button><span class="asm-batch"><input type="number" id="asmCount" min="1" value="10">台<button class="action-btn sec" id="asmBatchBtn" data-i18n="act.asmBatch">批量组装</button></span>
-      <p class="hint" data-i18n="组装需账户持有 档位×8 个部件并支付组装费（0.05 XCHIP/台）。批量自动按每笔 10 台分批排队执行。">组装需账户持有 档位×8 个部件并支付组装费（0.05 XCHIP/台）。批量自动按每笔 10 台分批排队执行。</p>
+      <button class="action-btn" id="assembleBtn" data-i18n="一键组装电脑">一键组装电脑</button><span class="asm-batch"><input type="number" id="asmCount" min="1" value="10">台<button class="action-btn sec" id="asmBatchBtn" data-i18n="act.asmBatch">批量组装</button></span>
+      <p class="hint" data-i18n="组装需账户持有 8 类部件各 1 件并支付组装费（0.05 XCHIP/台，全部进入平台收款地址）。档位 1–5 随机。批量自动按每笔 10 台分批排队执行。">组装需账户持有 8 类部件各 1 件并支付组装费（0.05 XCHIP/台，全部进入平台收款地址）。档位 1–5 随机。批量自动按每笔 10 台分批排队执行。</p>
     </div>
 
     <div class="card">
@@ -5565,7 +5557,7 @@ input:focus,textarea:focus,select:focus{
 
     <div class="card" id="market">
       <div class="kicker" data-i18n="Market · 交易市场">Market · 交易市场</div>
-      <p class="hint" data-i18n="PC 整机 NFT 与硬件部件均可在市场挂单买卖（XCHIP 计价，10% 手续费：5% 销毁 + 5% 持币分红池）。">PC 整机 NFT 与硬件部件均可在市场挂单买卖（XCHIP 计价，10% 手续费：5% 销毁 + 5% 持币分红池）。</p>
+      <p class="hint" data-i18n="PC 整机 NFT 与硬件部件均可在市场挂单买卖（XCHIP 计价，平台手续费 10% 全部进入平台收款地址）。">PC 整机 NFT 与硬件部件均可在市场挂单买卖（XCHIP 计价，平台手续费 10% 全部进入平台收款地址）。</p>
       <div class="mk-stats">
         <div class="mk-stat"><b id="mkStatCount">—</b><span data-i18n="mk.onSale">PC 在售</span></div>
         <div class="mk-stat gold"><b id="mkStatFloor">—</b><span data-i18n="mk.floorLb">最低价</span></div>
@@ -5625,7 +5617,7 @@ input:focus,textarea:focus,select:focus{
 
     <div class="card" id="box">
       <div class="kicker">TapeOut · <span data-i18n="box.title">盲盒协议</span></div>
-      <p class="hint">消耗 XCHIP 创建盲盒（自定义盒数 / 单价 / 部件权重），他人开盒随机得部件；销售额 90% 归创建者，10% 平台（5% 销毁 + 5% 分红池）。创建费 <b>10 XCHIP</b>。</p>
+      <p class="hint">消耗 XCHIP 创建盲盒（自定义盒数 / 单价 / 部件权重），他人开盒随机得部件；销售额 90% 归创建者，10% 平台 + 创建费 <b>10 XCHIP</b> 全部进入平台收款地址。</p>
       <div class="mk-sell">
         <div class="mk-form-label">创建盲盒</div>
         <div class="mk-row">
@@ -5712,10 +5704,10 @@ input:focus,textarea:focus,select:focus{
       <div class="chg-sec">
         <div class="chg-t">V6 重建 · 2026-09-28</div>
         <ul class="chg-list">
-          <li>全新 V6 合约体系：铸造 / 组装 / 质押 / 双市场 / 盲盒 / 分红六位一体，铸造费改用 OKB（进平台地址）</li>
+          <li>全新 V6 合约体系：OKB 盲盒抽部件 / 组装随机档位 / 质押 / 双市场 / 盲盒 / 分红六位一体，全部费用进入平台收款地址</li>
           <li>以老项目为基础重建界面：完整保留深蓝金青视觉、锻造动画、组装台、矿机列表</li>
           <li>批量操作默认 10 台上限，队列执行器自动分批、可终止后续全部、失败项可重试</li>
-          <li>市场 XCHIP 计价：PC 整机 + 硬件部件，手续费 10%（5% 销毁 + 5% 分红池）</li>
+          <li>市场 XCHIP 计价：PC 整机 + 硬件部件，手续费 10% 全部进入平台收款地址</li>
           <li>TapeOut 盲盒：消耗 XCHIP 创建 / 开盒，销售额 90% 归创建者</li>
           <li>My 资产页：待机 / 质押分块，长列表内部滚动；硬件部件单独弹窗查看</li>
         </ul>
@@ -5768,12 +5760,12 @@ var CHAIN_ID = 196, CHAIN_HEX = "0xc4";
 var EXPLORER = "https://www.okx.com/web3/explorer/xlayer";
 var ADDRS = {
   xchip:   "0xF38B60311BB4210A1d07fc39c35dE5e40f8Ea2CD",
-  circuit: "0x292bA8c8a524B5Db96762bf2013C4D1a60946f74",
-  mining:  "0xE32716DBE5CeaA17190F3BB5cDb8962bb8425689",
-  part:    "0x10e2553DE5cC61Daa89BF97190b18f77E9c68534",
-  market:  "0x1De094A428adAa7A7567f1D777e5A8df1cBB2a09",
-  tapeOut: "0xB8fD4a034D22be6927E36233055484F182F593C0",
-  feeSplit:"0xdd5eAdc83Dfd5E6366AA9F3023CaAd8D60078c4e",
+  circuit: "0x3604DFeA333D4df8D8151D714931bD9E37feeBE2",
+  mining:  "0x1898784BE383cf8a21322beBf9BaC91EA487512C",
+  part:    "0x3019a2Dd377A7ACaC05Ccb08073b5d7373067904",
+  market:  "0x27E5dDE6909bCbdC9Da58856A2BBCF9aBb29735d",
+  tapeOut: "0x487Bd92b9b130B0939888Ec5Afe71C1744d81254",
+  feeSplit:"0x934c0Bc9fE5CEFdb946956E470c2f397d7dE844D",
   burn:    "0x000000000000000000000000000000000000dEaD",
   tapex:   "0xF154C55BbFf1B889d4AE279c0e3E9D31671fEEeE",
   dividend:"0xA86e125b6F824483fC16616d963481C8a346f5dF",
@@ -5823,8 +5815,8 @@ function toggleLang(){ LANG = (LANG === "zh") ? "en" : "zh"; try { localStorage.
 /* ---------- ABI ---------- */
 var ABI_XCHIP = ["function balanceOf(address) view returns (uint256)","function totalSupply() view returns (uint256)","function decimals() view returns (uint8)","function approve(address,uint256) returns (bool)","function allowance(address,address) view returns (uint256)"];
 var ABI_CIRCUIT = [
-  "function mint(uint256) payable","function batchMint(uint256[]) payable",
-  "function assemble(uint256)","function batchAssemble(uint256[])",
+  "function mint(uint256) payable",
+  "function assemble()","function batchAssemble(uint256)",
   "function migratePCs(uint256[],address)",
   "function pcsOfOwner(address) view returns (uint256[])",
   "function getCircuits(uint256[]) view returns (tuple(uint256 processorId,bytes32 circuitHash,uint8[8] tiers,uint32 hashRate,uint8 grade,uint256 createdAt)[])",
@@ -6347,32 +6339,30 @@ async function refreshDivd(){
 
 /* ============ 交易 ============ */
 function requireWallet(){ if (!signer){ toast("请先连接钱包"); return false; } return true; }
-async function doMint(pid, amt){
+async function doMint(){
   if (!requireWallet()) return;
   var circ = signC(ADDRS.circuit, ABI_CIRCUIT);
   var fee = await readRetry(function(){ return circ.mintFee(); });
-  var value = fee * BigInt(amt);
-  var n = $("mintAmt").value || "1";
-  var qty = Math.min(Math.max(parseInt(n, 10) || 1, 1), 100);
-  var items = Array(qty).fill(pid);
-  batchRunner("批量铸造", items, async function(slice){
-    var ids = slice;
-    var tx;
-    if (ids.length === 1) tx = await circ.mint(ids[0], { value: fee });
-    else {
-      var per = fee * BigInt(ids.length);
-      tx = await circ.batchMint(ids, { value: per });
-    }
+  var n = $("mintAmt").value || "10";
+  var qty = Math.min(Math.max(parseInt(n, 10) || 1, 1), 100000);
+  var perBatch = 5000;   // 每笔 5,000 件（gas 安全）
+  var batches = [];
+  var left = qty;
+  while (left > 0) { var b = left > perBatch ? perBatch : left; batches.push(b); left -= b; }
+  $("forgePicked").textContent = fmt(qty);
+  batchRunner("盲盒抽卡 " + fmt(qty) + " 件（分 " + batches.length + " 批）", batches, async function(b){
+    var tx = await circ.mint(b, { value: fee * BigInt(b) });
     var rc = await tx.wait();
     if (rc.status !== 1) throw new Error("交易失败");
-    return "已铸 " + ids.length + " 台 PC";
-  }, 10);
+    forgeAnim();
+    return "已抽 " + fmt(b) + " 件部件";
+  }, 1);
 }
-async function doAssemble(pid, count){
+async function doAssemble(count){
   if (!requireWallet()) return;
   var circ = signC(ADDRS.circuit, ABI_CIRCUIT);
   var fee = await readRetry(function(){ return circ.assembleFee(); });
-  // 授权 XCHIP（组装费）
+  // 授权 XCHIP（组装费，一次授权）
   var xchip = signC(ADDRS.xchip, ABI_XCHIP);
   var allow = await readRetry(function(){ return xchip.allowance(account, ADDRS.circuit); });
   if (allow < fee * BigInt(Math.min(count, 10))){
@@ -6380,11 +6370,10 @@ async function doAssemble(pid, count){
     var tx0 = await xchip.approve(ADDRS.circuit, ethers.MaxUint256);
     await tx0.wait();
   }
-  var items = Array(count).fill(pid);
-  batchRunner("批量组装", items, async function(slice){
+  batchRunner("批量组装 " + count + " 台", Array(count).fill(1), async function(slice){
     var tx;
-    if (slice.length === 1) tx = await circ.assemble(slice[0]);
-    else tx = await circ.batchAssemble(slice);
+    if (slice.length === 1) tx = await circ.assemble();
+    else tx = await circ.batchAssemble(slice.length);
     var rc = await tx.wait();
     if (rc.status !== 1) throw new Error("交易失败");
     return "已组装 " + slice.length + " 台 PC";
@@ -6611,26 +6600,25 @@ function bind(){
   $("switchNet").addEventListener("click", switchNet);
   $("menuBtn").addEventListener("click", function(){ var p = $("menuPanel"); p.style.display = p.style.display === "block" ? "none" : "block"; });
   document.querySelectorAll("#menuPanel a").forEach(function(a){ a.addEventListener("click", function(){ $("menuPanel").style.display = "none"; }); });
-  // 铸造
+  // 铸造（盲盒抽部件）
   $("forgeCore").addEventListener("click", function(){
     if (!account){ connectWallet(); return; }
-    var pid = Number($("mintPid").value || 1);
-    var amt = Math.min(Math.max(parseInt($("mintAmt").value || "1", 10) || 1, 1), 100);
-    forgeAnim(); doMint(pid, amt);
+    forgeAnim(); doMint();
   });
   $("mintAmt").addEventListener("input", updMintPrice);
-  $("mintPid").addEventListener("change", updMintPrice);
   updMintPrice();
-  $("forgeOwnSlot").addEventListener("click", openPartsModal);
-  // 组装
-  $("assembleBtn").addEventListener("click", function(){
-    var pid = Number($("asmTier").value || 1);
-    doAssemble(pid, 1);
+  document.querySelectorAll("#mint .mq").forEach(function(b){
+    b.addEventListener("click", function(){
+      $("mintAmt").value = b.getAttribute("data-n");
+      updMintPrice();
+    });
   });
+  $("forgeOwnSlot").addEventListener("click", openPartsModal);
+  // 组装（档位随机）
+  $("assembleBtn").addEventListener("click", function(){ doAssemble(1); });
   $("asmBatchBtn").addEventListener("click", function(){
-    var pid = Number($("asmTier").value || 1);
     var n = Math.min(Math.max(parseInt($("asmCount").value || "10", 10) || 1, 1), 100);
-    doAssemble(pid, n);
+    doAssemble(n);
   });
   // 质押
   $("claimBtn").addEventListener("click", doClaim);
@@ -6698,10 +6686,9 @@ function bind(){
   });
 }
 function updMintPrice(){
-  var pid = Number($("mintPid").value || 1);
-  var amt = Math.max(parseInt($("mintAmt").value || "1", 10) || 1, 1);
-  $("mintPrice").textContent = fmt((amt * 0.01)) + " OKB";
-  $("mintNote").textContent = "· 消耗部件 " + fmt(pid * 8 * amt) + " 件";
+  var amt = Math.max(parseInt($("mintAmt").value || "10", 10) || 1, 1);
+  $("mintPrice").textContent = fmt((amt * 0.001).toFixed(3)) + " OKB";
+  $("mintNote").textContent = "· 随机抽 " + fmt(amt) + " 件硬件";
 }
 function buildWeightGrid(){
   var g = $("bxWGrid"); if (!g) return;
