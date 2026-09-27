@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TapeX V6 — X Layer 矿机协议</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e17;--card:#131a28;--card2:#1a2338;--line:#243047;
+  --tx:#e8ecf4;--tx2:#8a94ab;--tx3:#5a657d;
+  --acc:#F0C267;--acc2:#7b5cff;--ok:#37d67a;--err:#ff5c6c;--blue:#4d9fff;
+}
+html{scrollbar-color:#2a3650 #0a0e17}
+body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",Roboto,sans-serif;min-height:100vh;padding-bottom:76px}
+a{color:var(--blue);text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+input,select{font-family:inherit;background:var(--card2);border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:10px 12px;font-size:14px;width:100%}
+input:focus,select:focus{border-color:var(--acc)}
+input[type=number]{-moz-appearance:textfield}
+::-webkit-outer-spin-button,::-webkit-inner-spin-button{-webkit-appearance:none}
+
+.wrap{max-width:1080px;margin:0 auto;padding:0 14px}
+/* 顶部 */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(10,14,23,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;gap:10px;padding:12px 0}
+.logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:18px;letter-spacing:.5px}
+.logo .dot{width:12px;height:12px;border-radius:4px;background:linear-gradient(135deg,var(--acc),var(--acc2));box-shadow:0 0 14px rgba(240,194,103,.5)}
+.logo small{font-weight:500;color:var(--tx2);font-size:11px;margin-left:2px}
+.top-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.rpc-diag{display:flex;gap:4px;align-items:center;font-size:10px;color:var(--tx3)}
+.rpc-diag i{width:8px;height:8px;border-radius:50%;display:inline-block;background:#333}
+.rpc-diag i.ok{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.rpc-diag i.fail{background:var(--err)}
+.rpc-diag i.cur{outline:2px solid var(--acc);outline-offset:1px}
+.btn{background:linear-gradient(135deg,var(--acc),#d9a83d);color:#14181f;font-weight:700;border-radius:12px;padding:10px 18px;font-size:14px;transition:.2s}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:var(--card2);color:var(--tx);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc)}
+.btn.purple{background:linear-gradient(135deg,var(--acc2),#5a3fdd);color:#fff}
+.btn.danger{background:rgba(255,92,108,.12);color:var(--err);border:1px solid rgba(255,92,108,.35)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.sm{padding:6px 12px;font-size:12px;border-radius:9px}
+.wallet-btn{display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:9px 15px;font-size:13px}
+.wallet-btn:hover{border-color:var(--acc)}
+.wallet-btn .addr{font-family:ui-monospace,monospace;font-size:12px;color:var(--acc)}
+/* 导航 */
+.nav{display:flex;gap:2px;overflow-x:auto;padding:8px 0 0;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav button{background:none;border:none;color:var(--tx2);padding:10px 16px;font-size:14px;font-weight:600;border-radius:10px 10px 0 0;white-space:nowrap;position:relative}
+.nav button.on{color:var(--tx);background:var(--card)}
+.nav button.on::after{content:"";position:absolute;left:16px;right:16px;bottom:0;height:2px;background:var(--acc);border-radius:2px}
+/* 页面 */
+.page{display:none;padding-top:16px}
+.page.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h3{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card h3 .tag{font-size:10px;font-weight:600;color:var(--acc);background:rgba(240,194,103,.12);padding:2px 7px;border-radius:6px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--card2);border-radius:11px;padding:12px}
+.stat .lb{font-size:11px;color:var(--tx3);margin-bottom:5px}
+.stat .vl{font-size:18px;font-weight:700}
+.stat .vl.sm{font-size:14px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.row .grow{flex:1;min-width:120px}
+.hint{font-size:11px;color:var(--tx3);line-height:1.6}
+.hint b{color:var(--tx2)}
+.sep{height:1px;background:var(--line);margin:12px 0}
+/* PC 列表 */
+.pc-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.pc{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px;position:relative;overflow:hidden}
+.pc .pid{font-size:20px;font-weight:800;margin-bottom:4px}
+.pc .meta{font-size:11px;color:var(--tx2);line-height:1.7}
+.pc .meta b{color:var(--tx)}
+.pc .tagst{position:absolute;top:10px;right:10px;font-size:10px;padding:3px 8px;border-radius:6px;font-weight:700}
+.pc .tagst.staking{background:rgba(55,214,122,.14);color:var(--ok)}
+.pc .tagst.listed{background:rgba(123,92,255,.16);color:var(--acc2)}
+.pc .tagst.idle{background:rgba(90,101,125,.18);color:var(--tx2)}
+.pc .ops{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.pc .ops button{flex:1;min-width:64px}
+.pc.selected{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.pc .chk{position:absolute;top:10px;left:10px;width:16px;height:16px;border:1.5px solid var(--tx3);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;cursor:pointer;background:transparent}
+.pc.selected .chk{background:var(--acc);border-color:var(--acc);color:#14181f}
+/* 部件条 */
+.part-bar{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.part{background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:8px 4px;text-align:center}
+.part .n{font-size:16px;margin-bottom:2px}
+.part .cnt{font-size:12px;font-weight:700}
+.part .lb{font-size:9px;color:var(--tx3)}
+/* 队列 */
+.queue-panel{position:fixed;left:0;right:0;bottom:0;z-index:100;background:var(--card);border-top:1px solid var(--line);display:none;max-height:36vh;flex-direction:column}
+.queue-panel.show{display:flex}
+.queue-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700}
+.queue-head .st{margin-left:auto;font-size:11px;color:var(--acc)}
+.queue-body{overflow-y:auto;padding:8px 14px;flex:1}
+.q-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:12px}
+.q-item .no{color:var(--tx3);width:24px;flex-shrink:0}
+.q-item .desc{flex:1;color:var(--tx)}
+.q-item .st2{font-size:10px;color:var(--tx3)}
+.q-item.done .desc{color:var(--tx3);text-decoration:line-through}
+.q-item.fail .desc{color:var(--err)}
+.q-item.run .st2{color:var(--acc)}
+/* toast */
+.toasts{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 18px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.4);animation:tin .25s}
+.toast.ok{border-color:var(--ok)}
+.toast.err{border-color:var(--err)}
+@keyframes tin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+/* modal */
+.modal{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.modal.show{display:flex}
+.modal-box{background:var(--card);border:1px solid var(--line);border-radius:16px;width:100%;max-width:480px;max-height:82vh;overflow-y:auto;padding:18px;animation:tin .22s}
+.modal-box h3{font-size:16px;margin-bottom:14px}
+.m-row{margin-bottom:12px}
+.m-row label{display:block;font-size:11px;color:var(--tx3);margin-bottom:6px}
+.m-ops{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+/* 通用 */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;color:var(--tx3);font-weight:600;padding:8px 6px;border-bottom:1px solid var(--line)}
+.tbl td{padding:8px 6px;border-bottom:1px solid rgba(36,48,71,.5)}
+.tbl td b{color:var(--acc)}
+.mono{font-family:ui-monospace,SFMono-Regular,monospace;font-size:11px;color:var(--tx2);word-break:break-all}
+.empty{text-align:center;color:var(--tx3);padding:28px 0;font-size:13px}
+.loading{text-align:center;color:var(--tx3);padding:20px 0;font-size:13px}
+.errbox{background:rgba(255,92,108,.08);border:1px solid rgba(255,92,108,.3);color:var(--err);border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px;line-height:1.6}
+.stepper{display:flex;gap:2px;margin:8px 0}
+.stepper button{width:34px;height:34px;border-radius:9px;background:var(--card2);border:1px solid var(--line);color:var(--tx);font-size:16px;font-weight:700}
+.stepper .num{flex:1;text-align:center;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid var(--line);border-radius:9px;font-weight:700;font-size:15px}
+footer{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:8px 12px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;z-index:40}
+footer::-webkit-scrollbar{display:none}
+footer button{flex:1;min-width:88px;background:none;border:none;color:var(--tx2);font-size:12px;font-weight:600;padding:10px 6px;border-radius:9px;white-space:nowrap}
+footer button.on{background:var(--card2);color:var(--acc)}
+@media(max-width:560px){
+  .stat .vl{font-size:15px}
+  .pc-list{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  .part-bar{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="wrap top-in">
+  <div class="logo"><span class="dot"></span>TapeX<small>V6 · X Layer</small></div>
+  <div class="top-r">
+    <div class="rpc-diag" id="rpcDiag" title="RPC 状态"></div>
+    <button class="wallet-btn" id="walletBtn">连接钱包</button>
+  </div>
+</div>
+<nav class="wrap nav" id="nav">
+  <button data-page="my" class="on">My 资产</button>
+  <button data-page="mint">铸造</button>
+  <button data-page="assemble">组装</button>
+  <button data-page="stake">质押</button>
+  <button data-page="market">市场</button>
+  <button data-page="box">盲盒</button>
+</nav></div>
+
+<div class="wrap">
+<div id="page-my" class="page on">
+  <div id="myErr"></div>
+  <div class="card">
+    <h3>总览 <span class="tag">资产</span></h3>
+    <div class="grid3" id="myStats"><div class="stat"><div class="lb">连接钱包查看资产</div><div class="vl">—</div></div></div>
+  </div>
+  <div class="card">
+    <h3>硬件部件 <span class="tag">PartToken</span></h3>
+    <div class="part-bar" id="partBar"></div>
+  </div>
+  <div class="card">
+    <h3>我的 PC <span class="tag" id="pcCountTag">0 台</span></h3>
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn ghost sm" id="refreshBtn">刷新</button>
+      <button class="btn ghost sm" id="selectIdleBtn">全选待机</button>
+      <button class="btn ghost sm" id="clearSelBtn">清空</button>
+      <button class="btn purple sm" id="batchStakeBtn">批量质押</button>
+      <button class="btn purple sm" id="batchListBtn">批量挂单</button>
+      <button class="btn sm" id="migrateBtn">迁移旧矿机</button>
+    </div>
+    <div class="pc-list" id="pcList"><div class="empty">连接钱包后显示矿机</div></div>
+  </div>
+  <div class="card">
+    <h3>代币</h3>
+    <div class="grid2" id="tokenBox"></div>
+  </div>
+</div>
+
+<div id="page-mint" class="page">
+  <div class="card">
+    <h3>铸造 PC <span class="tag">消耗 XCHIP + 部件</span></h3>
+    <div class="grid3">
+      <div class="stat"><div class="lb">铸造费 / 台</div><div class="vl sm" id="mintFeeInfo">—</div></div>
+      <div class="stat"><div class="lb">部件消耗 / 台</div><div class="vl sm">品质 × 8 种 × 1</div></div>
+      <div class="stat"><div class="lb">XCHIP 余额</div><div class="vl sm" id="mintXchip">—</div></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <div class="grow"><label class="hint">品质档位（1-5，越高算力越高）</label>
+        <select id="mintPid"><option value="1">品质 1 · 算力 100</option><option value="2">品质 2 · 算力 200</option><option value="3">品质 3 · 算力 300</option><option value="4">品质 4 · 算力 400</option><option value="5">品质 5 · 算力 500</option></select>
+      </div>
+      <div><label class="hint">数量</label><div class="stepper"><button id="mintDec">−</button><div class="num" id="mintNum">1</div><button id="mintInc">+</button></div></div>
+      <div><label class="hint" style="visibility:hidden">.</label><button class="btn" id="mintGo">铸造</button></div>
+    </div>
+    <div class="hint" style="margin-top:10px">每台消耗 <b id="mintFeeCalc">—</b> XCHIP 与 <b>品质 × 8 个部件</b>（每种）。批量上限 10 台。</div>
+  </div>
+</div>
+
+<div id="page-assemble" class="page">
+  <div class="card">
+    <h3>组装 PC <span class="tag">部件合成矿机</span></h3>
+    <div class="grid3">
+      <div class="stat"><div class="lb">组装费 / 台</div><div class="vl sm" id="asmFeeInfo">—</div></div>
+      <div class="stat"><div class="lb">部件消耗</div><div class="vl sm">品质 × 8 种 × 1</div></div>
+      <div class="stat"><div class="lb">组装算力</div><div class="vl sm">品质 × 100 + 50</div></div>
+    </div>
+    <div class="part-bar" id="asmPartBar" style="margin-top:12px"></div>
+    <div class="row" style="margin-top:14px">
+      <div class="grow"><label class="hint">目标品质（档位优先烧：消耗 品质×8 个部件）</label>
+        <select id="asmPid"><option value="1">品质 1 · 算力 150</option><option value="2">品质 2 · 算力 250</option><option value="3">品质 3 · 算力 350</option><option value="4">品质 4 · 算力 450</option><option value="5">品质 5 · 算力 550</option></select>
+      </div>
+      <div><label class="hint">数量</label><div class="stepper"><button id="asmDec">−</button><div class="num" id="asmNum">1</div><button id="asmInc">+</button></div></div>
+      <div><label class="hint" style="visibility:hidden">.</label><button class="btn purple" id="asmGo">组装</button></div>
+    </div>
+    <div class="hint" style="margin-top:10px">组装从你的部件库存自动扣除 <b>品质 × 8</b> 个（每种 8 个类型）。批量上限 10 台。</div>
+  </div>
+</div>
+
+<div id="page-stake" class="page">
+  <div class="card">
+    <h3>质押挖矿 <span class="tag">XCHIP 奖励</span></h3>
+    <div class="grid3">
+      <div class="stat"><div class="lb">质押中</div><div class="vl" id="stakeCount">—</div></div>
+      <div class="stat"><div class="lb">总份额（算力）</div><div class="vl" id="stakeShares">—</div></div>
+      <div class="stat"><div class="lb">待领取</div><div class="vl" id="stakeEarned">—</div></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost sm" id="stakeRefresh">刷新</button>
+      <button class="btn sm" id="stakeAllClaim">领取全部</button>
+      <button class="btn purple sm" id="stakeBatchUnstake">批量解压选中</button>
+    </div>
+    <div class="pc-list" id="stakeList" style="margin-top:12px"><div class="empty">连接钱包后显示质押矿机</div></div>
+  </div>
+</div>
+
+<div id="page-market" class="page">
+  <div class="card">
+    <h3>部件市场 <span class="tag">挂单 / 购买</span></h3>
+    <div class="row" style="margin-bottom:10px">
+      <div class="grow"><select id="mktPartType"><option value="1">部件 1 · CPU</option><option value="2">部件 2 · GPU</option><option value="3">部件 3 · 内存</option><option value="4">部件 4 · 主板</option><option value="5">部件 5 · 硬盘</option><option value="6">部件 6 · 电源</option><option value="7">部件 7 · 散热</option><option value="8">部件 8 · 机箱</option></select></div>
+      <div class="grow"><input type="number" id="mktPartPrice" placeholder="单价 XCHIP"></div>
+      <div class="grow"><input type="number" id="mktPartAmt" placeholder="数量"></div>
+      <button class="btn purple sm" id="mktPartList">挂单</button>
+    </div>
+    <div id="partOrdersBox"><div class="loading">加载中…</div></div>
+  </div>
+  <div class="card">
+    <h3>PC 市场 <span class="tag">挂单 / 购买</span></h3>
+    <div class="row" style="margin-bottom:10px">
+      <div class="grow"><label class="hint">选中待机 PC 后设价</label><input type="number" id="mktPcPrice" placeholder="价格 XCHIP"></div>
+      <button class="btn purple sm" id="mktPcList">挂单选中</button>
+      <button class="btn ghost sm" id="mktPcRefresh">刷新市场</button>
+    </div>
+    <div id="pcOrdersBox"><div class="loading">加载中…</div></div>
+  </div>
+</div>
+
+<div id="page-box" class="page">
+  <div class="card">
+    <h3>创建盲盒 <span class="tag">消耗 XCHIP</span></h3>
+    <div class="grid3">
+      <div class="stat"><div class="lb">创建费</div><div class="vl sm" id="boxCreateFee">—</div></div>
+      <div class="stat"><div class="lb">分成</div><div class="vl sm">创建者 90%</div></div>
+      <div class="stat"><div class="lb">平台</div><div class="vl sm">5% 销毁 + 5% 分红</div></div>
+    </div>
+    <div class="grid3" style="margin-top:12px">
+      <div><label class="hint">单价（XCHIP）</label><input type="number" id="boxPrice" placeholder="如 0.01"></div>
+      <div><label class="hint">总盒数</label><input type="number" id="boxTotal" value="10000"></div>
+      <div><label class="hint">各部件权重（1-8，逗号分隔，空=平均）</label><input type="text" id="boxWeights" placeholder="如 1,1,1,1,1,1,1,1"></div>
+    </div>
+    <button class="btn" id="boxCreate" style="margin-top:12px">创建盲盒（10 XCHIP）</button>
+  </div>
+  <div class="card">
+    <h3>盲盒列表 <span class="tag">开盒</span></h3>
+    <div id="boxList"><div class="loading">加载中…</div></div>
+  </div>
+</div>
+</div>
+
+<footer id="footNav">
+  <button data-page="my" class="on">My 资产</button>
+  <button data-page="mint">铸造</button>
+  <button data-page="assemble">组装</button>
+  <button data-page="stake">质押</button>
+  <button data-page="market">市场</button>
+  <button data-page="box">盲盒</button>
+</footer>
+
+<div class="queue-panel" id="queuePanel">
+  <div class="queue-head"><span>队列执行器</span><span class="qcount" id="qCount">0 项</span><span class="st" id="qStatus">空闲</span><button class="btn ghost sm" id="qAbort">终止后序全部</button></div>
+  <div class="queue-body" id="qBody"></div>
+</div>
+<div class="toasts" id="toasts"></div>
+
+<div class="modal" id="modal"><div class="modal-box" id="modalBox"></div></div>
+
+<script>
+/* ================= 配置 ================= */
+var ADDRS = {
+  xchip: "0xF38B60311BB4210A1d07fc39c35dE5e40f8Ea2CD",
+  circuit: "0xd94Dc3d1D395e04cb1bacE5152fA28aE57Ad8d17",
+  mining: "0x49657bc1e62197594e6b478e49D193027823960f",
+  partToken: "0xaAdD04aafa501772Eab54759AEeF8d3c5d3dE77c",
+  market: "0xbA34f2CeBfB0446079fBe1A8Dcb6c59c7b69538D",
+  tapeOut: "0x5D63B51A4b6199823aDA500Bf3849e15193AE7E2",
+  feeSplitter: "0xe88115c7385e1AcD6A32B7394Bb0644A2E8E397A",
+  burn: "0x000000000000000000000000000000000000dEaD"
+};
+var RPCS = ["https://xlayerrpc.okx.com","https://xlayer.drpc.org","https://rpc.nodeflare.app/xlayer/public","https://rpc.xlayer.tech"];
+var CHAIN = { chainId: 196, name: "X Layer" };
+var PARTS = ["CPU","GPU","内存","主板","硬盘","电源","散热","机箱"];
+
+var ABI = {
+  xchip: ["function balanceOf(address) view returns (uint256)","function totalSupply() view returns (uint256)"],
+  circuit: [
+    "function pcsOfOwner(address) view returns (uint256[])",
+    "function getCircuits(uint256[]) view returns ((uint256 processorId,bytes32 circuitHash,uint8[8] tiers,uint32 hashRate,uint8 grade,uint256 createdAt)[])",
+    "function stakedStatusOf(uint256[]) view returns (bool[])",
+    "function ownerOf(uint256) view returns (address)",
+    "function listedOf(uint256) view returns (bool)",
+    "function mintFee() view returns (uint256)","function assembleFee() view returns (uint256)","function maxBatch() view returns (uint256)",
+    "function mint(uint256)","function batchMint(uint256[])","function assemble(uint256)","function batchAssemble(uint256[])",
+    "function migratePCs(uint256[],address)","function migrationOpen() view returns (bool)","function lastTokenId() view returns (uint256)"
+  ],
+  mining: [
+    "function stake(uint256)","function batchStake(uint256[])","function unstake(uint256)","function batchUnstake(uint256[])",
+    "function claim(uint256[]) returns (uint256)","function earned(uint256) view returns (uint256)",
+    "function stakedPCsOf(address) view returns (uint256[])","function userShares(address) view returns (uint256)",
+    "function userEarned(address) view returns (uint256)","function rewardPerSharePerSec() view returns (uint256)",
+    "function totalShares() view returns (uint256)","function stakes(uint256) view returns (address,uint256,uint256,bool)","function maxBatch() view returns (uint256)"
+  ],
+  part: ["function balanceOfBatch(address[],uint256[]) view returns (uint256[])","function balanceOf(address,uint256) view returns (uint256)","function isApprovedForAll(address,address) view returns (bool)","function setApprovalForAll(address,bool)"],
+  market: [
+    "function listPart(uint256,uint256,uint256)","function batchListPart(uint256[],uint256[],uint256[])",
+    "function delistPart(uint256[])","function buyPart(uint256,uint256)",
+    "function listPC(uint256,uint256)","function batchListPC(uint256[],uint256[])",
+    "function delistPC(uint256[])","function buyPC(uint256)",
+    "function partOrderCount() view returns (uint256)","function pcOrderCount() view returns (uint256)",
+    "function partOrders(uint256) view returns (address seller,uint256 price,uint256 amount,uint256 partType,bool active)",
+    "function pcOrders(uint256) view returns (address seller,uint256 price,uint256 tokenId,bool active)",
+    "function feeBps() view returns (uint256)"
+  ],
+  tapeOut: [
+    "function createBox(uint256,uint256,uint8[8])","function openBox(uint256,uint256) returns (uint256[])",
+    "function closeBox(uint256)","function boxCount() view returns (uint256)",
+    "function boxes(uint256) view returns (address creator,uint256 price,uint256 total,uint256 sold,uint8[8] weights,uint256 createdAt,bool closed)",
+    "function createFee() view returns (uint256)"
+  ],
+  feeSplitter: ["function claim() returns (uint256)","function pending(address) view returns (uint256)","function totalDeposited() view returns (uint256)"]
+};
+
+/* ================= 工具 ================= */
+function $(id){ return document.getElementById(id); }
+function fmt(n, d){ try{ n = BigInt(n); d = d === undefined ? 4 : d; return (Number(n) / 1e18).toLocaleString(undefined,{maximumFractionDigits:d}); }catch(e){ return "0"; } }
+function fmtRaw(n){ return Number(n).toLocaleString(); }
+function addrShort(a){ return a ? a.slice(0,6)+"…"+a.slice(-4) : ""; }
+function toast(msg, ok){ var t=document.createElement("div"); t.className="toast"+(ok?" ok":" err"); t.textContent=msg; $("toasts").appendChild(t); setTimeout(function(){ t.style.opacity="0"; t.style.transition=".3s"; setTimeout(function(){ t.remove(); },300); }, 3200); }
+function humanErr(e){
+  if (!e) return "未知错误";
+  var m = String(e && (e.shortMessage || e.message) || e);
+  if (/Failed to fetch|fetch failed|ENOTFOUND|ECONNREFUSED|network/i.test(m)) return "网络连接失败（RPC 不可达），请检查网络/VPN/换 DNS";
+  if (/user rejected|ACTION_REJECTED|declined/i.test(m)) return "已取消签名";
+  if (/insufficient funds/i.test(m)) return "XCHIP 余额不足";
+  if (/replacement|nonce/i.test(m)) return "交易冲突，请重试";
+  if (/execution reverted/i.test(m)) {
+    var reason = m.match(/reason="([^"]+)"/) || m.match(/reason='([^']+)'/);
+    return "交易被拒绝：" + (reason ? reason[1] : m.slice(0, 80));
+  }
+  return m.slice(0, 100);
+}
+function copyText(t){
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(function(){ toast("已复制", true); });
+  else toast("复制失败", false);
+}
+
+/* ================= RPC 池 ================= */
+var rpcIdx = 0, rpcOk = [], pubProvider = null;
+function makePub(){
+  try {
+    pubProvider = new ethers.JsonRpcProvider(RPCS[rpcIdx], new ethers.Network("xlayer", 196), { staticNetwork: true, batchMaxCount: 1 });
+  } catch(e){}
+  return pubProvider;
+}
+function rpcFail(){
+  rpcIdx = (rpcIdx + 1) % RPCS.length;
+  makePub();
+  renderRpcDiag();
+  console.warn("RPC 切换到", RPCS[rpcIdx]);
+}
+function probeRpc(){
+  RPCS.forEach(function(r, i){
+    var p = new ethers.JsonRpcProvider(r, new ethers.Network("xlayer", 196), { staticNetwork: true, batchMaxCount: 1 });
+    Promise.race([
+      p.getNetwork().then(function(n){ rpcOk[i] = String(n.chainId) === "196"; }),
+      new Promise(function(res){ setTimeout(function(){ rpcOk[i] = false; }, 8000); })
+    ]).catch(function(){ rpcOk[i] = false; }).finally(function(){ renderRpcDiag(); });
+  });
+}
+function renderRpcDiag(){
+  var el = $("rpcDiag");
+  if (!el) return;
+  el.innerHTML = RPCS.map(function(r, i){
+    var c = "fail"; if (rpcOk[i] === true) c = "ok"; if (i === rpcIdx) c += " cur";
+    return '<i class="' + c + '" title="' + r + '"></i>';
+  }).join("");
+}
+setTimeout(probeRpc, 1500);
+setInterval(function(){ if (pubProvider) probeRpc(); }, 300000);
+
+/* ================= 钱包 ================= */
+var signer = null, account = null;
+function hasWallet(){ return typeof window.ethereum !== "undefined" || typeof window.okxwallet !== "undefined"; }
+$("walletBtn").addEventListener("click", function(){
+  if (signer && account){ showModal('<h3>已连接</h3><div class="m-row"><label>地址</label><div class="mono">' + account + '</div></div><div class="m-ops"><button class="btn ghost" onclick="closeModal()">关闭</button><button class="btn danger" onclick="disconnectWallet()">断开</button></div>'); return; }
+  connectWallet();
+});
+async function connectWallet(){
+  var eth = window.okxwallet || window.ethereum;
+  if (!eth){ toast("未检测到钱包（OKX Wallet / MetaMask）", false); return; }
+  try {
+    await eth.request({ method: "eth_requestAccounts" });
+    var provider = new ethers.BrowserProvider(eth);
+    var s = await provider.getSigner();
+    signer = s; account = (await s.getAddress()).toLowerCase();
+    var net = await provider.getNetwork();
+    if (String(net.chainId) !== "196"){
+      try { await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0xc4" }] }); } catch(e){}
+    }
+    $("walletBtn").innerHTML = '<span class="addr">' + addrShort(account) + '</span>';
+    toast("钱包已连接", true);
+    renderAll();
+  } catch(e){ toast(humanErr(e), false); }
+}
+function disconnectWallet(){ signer = null; account = null; $("walletBtn").textContent = "连接钱包"; $("pcList").innerHTML = '<div class="empty">连接钱包后显示矿机</div>'; renderAll(); }
+window.addEventListener("accountsChanged", function(){ disconnectWallet(); setTimeout(connectWallet, 300); });
+
+/* ================= 读取（批量，3 次调用拿全部） ================= */
+var myPcs = [], myPcInfo = [], myPcStaked = [], myParts = [];
+var selPcs = {};
+var __loading = false;
+
+async function readAssets(){
+  if (!signer || !account){ renderNoWallet(); return; }
+  __loading = true;
+  var errEl = $("myErr");
+  try {
+    var pub = makePub();
+    var circ = new ethers.Contract(ADDRS.circuit, ABI.circuit, pub);
+    var part = new ethers.Contract(ADDRS.partToken, ABI.part, pub);
+    var xchip = new ethers.Contract(ADDRS.xchip, ABI.xchip, pub);
+    var min = new ethers.Contract(ADDRS.mining, ABI.mining, pub);
+    if (errEl) errEl.innerHTML = "";
+
+    /* 1) PC 列表 + 详情 + 质押状态（3 次调用） */
+    var ids = await circ.pcsOfOwner(account);
+    myPcs = ids.map(function(x){ return Number(x); });
+    var info = [], stk = [];
+    if (myPcs.length){
+      var batch = 200;
+      for (var i = 0; i < myPcs.length; i += batch){
+        var chunk = myPcs.slice(i, i + batch);
+        var gi = await circ.getCircuits(chunk);
+        var si = await circ.stakedStatusOf(chunk);
+        for (var k = 0; k < chunk.length; k++){ info[chunk[k]] = gi[k]; stk[chunk[k]] = si[k]; }
+      }
+    }
+    myPcInfo = info; myPcStaked = stk;
+
+    /* 2) 部件 8 种（1 次调用） */
+    var pids = []; for (var p = 1; p <= 8; p++) pids.push(p);
+    var pbal = await part.balanceOfBatch(Array(8).fill(account), pids);
+    myParts = pbal.map(function(x){ return Number(x); });
+
+    /* 3) 代币 + 质押汇总 */
+    var [xchipBal, tapBal, totalShares, earned] = await Promise.all([
+      xchip.balanceOf(account),
+      xchip.balanceOf(ADDRS.market).catch(function(){ return 0n; }),
+      min.totalShares().catch(function(){ return 0n; }),
+      min.userEarned(account).catch(function(){ return 0n; })
+    ]);
+    window.__balances = { xchip: xchipBal, tap: tapBal, shares: totalShares, earned: earned };
+
+    renderMy();
+    renderParts();
+    renderStake();
+    renderPcList();
+  } catch(e){
+    console.warn("readAssets fail", e);
+    if (errEl) errEl.innerHTML = '<div class="errbox">资产读取失败：' + humanErr(e) + '</div>';
+    rpcFail();
+    setTimeout(function(){ if (signer && account) readAssets(); }, 8000);
+  }
+  __loading = false;
+}
+
+function renderNoWallet(){
+  $("myStats").innerHTML = '<div class="stat"><div class="lb">连接钱包查看资产</div><div class="vl">—</div></div>';
+  $("partBar").innerHTML = "";
+  $("pcList").innerHTML = '<div class="empty">连接钱包后显示矿机</div>';
+  $("pcCountTag").textContent = "0 台";
+  $("stakeList").innerHTML = '<div class="empty">连接钱包后显示质押矿机</div>';
+}
+
+function renderMy(){
+  var b = window.__balances || {};
+  var staking = myPcs.filter(function(id){ return myPcStaked[id]; });
+  var idle = myPcs.filter(function(id){ return !myPcStaked[id] && !(window.__listed && window.__listed[id]); });
+  var listed = Object.keys(window.__listed || {}).map(Number);
+  var totalHr = 0; myPcs.forEach(function(id){ if (myPcInfo[id]) totalHr += myPcInfo[id].hashRate; });
+  $("myStats").innerHTML =
+    '<div class="stat"><div class="lb">XCHIP 余额</div><div class="vl">' + fmt(b.xchip) + '</div></div>' +
+    '<div class="stat"><div class="lb">我的 PC</div><div class="vl">' + myPcs.length + ' 台</div></div>' +
+    '<div class="stat"><div class="lb">待机 / 质押</div><div class="vl sm">' + idle.length + ' / ' + staking.length + '</div></div>' +
+    '<div class="stat"><div class="lb">总算力</div><div class="vl">' + fmtRaw(totalHr) + ' H</div></div>' +
+    '<div class="stat"><div class="lb">待领取 XCHIP</div><div class="vl sm">' + fmt(b.earned) + '</div></div>';
+  $("pcCountTag").textContent = myPcs.length + " 台";
+  renderTokenBox();
+}
+
+function renderTokenBox(){
+  var b = window.__balances || {};
+  $("tokenBox").innerHTML =
+    '<div class="stat"><div class="lb">XCHIP <span class="hint">(点击复制)</span></div><div class="vl sm mono" style="cursor:pointer" onclick="copyText(ADDRS.xchip)">' + ADDRS.xchip.slice(0,10) + "…" + '</div></div>' +
+    '<div class="stat"><div class="lb">TAPEX <span class="hint">(点击复制)</span></div><div class="vl sm mono" style="cursor:pointer" onclick="copyText(\'0xF154C55BbFf1B889d4AE279c0e3E9D31671fEEeE\')">0xF154C5…fEEeE</div></div>';
+}
+
+function renderParts(){
+  $("partBar").innerHTML = myParts.map(function(c, i){
+    return '<div class="part"><div class="n">🖥️</div><div class="cnt">' + c + '</div><div class="lb">' + PARTS[i] + '</div></div>';
+  }).join("");
+  var asmBar = $("asmPartBar");
+  if (asmBar) asmBar.innerHTML = myParts.map(function(c, i){
+    return '<div class="part"><div class="n">🖥️</div><div class="cnt">' + c + '</div><div class="lb">' + PARTS[i] + '</div></div>';
+  }).join("");
+}
+
+function renderPcList(){
+  var staking = myPcs.filter(function(id){ return myPcStaked[id]; });
+  var idle = myPcs.filter(function(id){ return !myPcStaked[id]; });
+  var list = idle.concat(staking);
+  if (!list.length){ $("pcList").innerHTML = '<div class="empty">还没有矿机，去「铸造」或「组装」</div>'; return; }
+  $("pcList").innerHTML = list.map(function(id){
+    var info = myPcInfo[id];
+    var st = myPcStaked[id];
+    var tag = st ? '<span class="tagst staking">质押中</span>' : '<span class="tagst idle">待机</span>';
+    var hr = info ? info.hashRate : 0;
+    var pid = info ? info.processorId : "?";
+    return '<div class="pc' + (selPcs[id] ? " selected" : "") + '" data-id="' + id + '" onclick="toggleSel(' + id + ')">' +
+      '<span class="chk">✓</span>' + tag +
+      '<div class="pid">#' + id + '</div>' +
+      '<div class="meta">品质 <b>' + pid + '</b> · 算力 <b>' + fmtRaw(hr) + ' H</b></div>' +
+      '<div class="meta">' + (info ? "组合 " + info.circuitHash.slice(0, 10) + "…" : "") + '</div>' +
+      (st ? '<div class="ops"><button class="btn ghost sm" onclick="event.stopPropagation();unstakeOne(' + id + ')">解压</button></div>'
+          : '<div class="ops"><button class="btn purple sm" onclick="event.stopPropagation();stakeOne(' + id + ')">质押</button></div>') +
+      '</div>';
+  }).join("");
+}
+
+function toggleSel(id){
+  if (myPcStaked[id]) return;
+  if (selPcs[id]) delete selPcs[id]; else selPcs[id] = 1;
+  renderPcList();
+}
+$("selectIdleBtn").addEventListener("click", function(){
+  selPcs = {};
+  myPcs.forEach(function(id){ if (!myPcStaked[id]) selPcs[id] = 1; });
+  renderPcList();
+});
+$("clearSelBtn").addEventListener("click", function(){ selPcs = {}; renderPcList(); });
+$("refreshBtn").addEventListener("click", function(){ selPcs = {}; readAssets(); });
+$("stakeRefresh").addEventListener("click", function(){ readAssets(); });
+
+/* ================= 质押 ================= */
+function renderStake(){
+  var staking = myPcs.filter(function(id){ return myPcStaked[id]; });
+  $("stakeCount").textContent = staking.length + " 台";
+  var b = window.__balances || {};
+  $("stakeShares").textContent = fmtRaw(Number(b.shares)) + " H";
+  $("stakeEarned").textContent = fmt(b.earned) + " XCHIP";
+  if (!staking.length){ $("stakeList").innerHTML = '<div class="empty">无质押矿机</div>'; return; }
+  $("stakeList").innerHTML = staking.map(function(id){
+    var info = myPcInfo[id];
+    var hr = info ? info.hashRate : 0;
+    var pid = info ? info.processorId : "?";
+    return '<div class="pc"><span class="tagst staking">质押中</span>' +
+      '<div class="pid">#' + id + '</div>' +
+      '<div class="meta">品质 <b>' + pid + '</b> · 算力 <b>' + fmtRaw(hr) + ' H</b></div>' +
+      '<div class="ops"><button class="btn ghost sm" onclick="unstakeOne(' + id + ')">解压</button></div></div>';
+  }).join("");
+}
+
+async function stakeOne(id){
+  if (!signer) { toast("请先连接钱包", false); return; }
+  try {
+    var min = new ethers.Contract(ADDRS.mining, ABI.mining, signer);
+    var t = await min.stake(id);
+    toast("质押提交：" + t.hash.slice(0, 10) + "…", true);
+    await t.wait();
+    toast("质押成功", true);
+    readAssets();
+  } catch(e){ toast(humanErr(e), false); }
+}
+async function unstakeOne(id){
+  if (!signer) { toast("请先连接钱包", false); return; }
+  try {
+    var min = new ethers.Contract(ADDRS.mining, ABI.mining, signer);
+    var t = await min.unstake(id);
+    toast("解压提交：" + t.hash.slice(0, 10) + "…", true);
+    await t.wait();
+    toast("解压成功", true);
+    readAssets();
+  } catch(e){ toast(humanErr(e), false); }
+}
+$("batchStakeBtn").addEventListener("click", function(){
+  var ids = Object.keys(selPcs).map(Number);
+  if (!ids.length){ toast("先选中待机矿机", false); return; }
+  queueRun([{ type: "batchStake", ids: ids }], function(){ toast("批量质押完成", true); readAssets(); });
+});
+$("stakeBatchUnstake").addEventListener("click", function(){
+  var staking = myPcs.filter(function(id){ return myPcStaked[id]; });
+  if (!staking.length){ toast("无质押矿机", false); return; }
+  queueRun([{ type: "batchUnstake", ids: staking }], function(){ toast("批量解压完成", true); readAssets(); });
+});
+$("stakeAllClaim").addEventListener("click", function(){
+  var staking = myPcs.filter(function(id){ return myPcStaked[id]; });
+  if (!staking.length){ toast("无待领取", false); return; }
+  queueRun([{ type: "claim", ids: staking }], function(){ toast("领取完成", true); readAssets(); });
+});
+
+/* ================= 队列执行器 ================= */
+var queue = [], queueRunning = false, queueAbort = false;
+function queueRun(jobs, done){
+  if (queueRunning){ toast("队列正在执行，请稍候", false); return; }
+  queue = jobs; queueRunning = true; queueAbort = false;
+  $("queuePanel").classList.add("show");
+  renderQueue();
+  runNext(done);
+}
+async function runNext(done){
+  if (queueAbort){ queueRunning = false; $("qStatus").textContent = "已终止"; setTimeout(function(){ $("queuePanel").classList.remove("show"); }, 2500); return; }
+  if (!queue.length){ queueRunning = false; $("qStatus").textContent = "完成 ✓"; setTimeout(function(){ $("queuePanel").classList.remove("show"); }, 2500); if (done) done(); return; }
+  var job = queue[0];
+  job.state = "run";
+  renderQueue();
+  try {
+    var min = new ethers.Contract(ADDRS.mining, ABI.mining, signer);
+    var circ = new ethers.Contract(ADDRS.circuit, ABI.circuit, signer);
+    var mkt = new ethers.Contract(ADDRS.market, ABI.market, signer);
+    var t;
+    if (job.type === "batchStake") t = await min.batchStake(job.ids);
+    else if (job.type === "batchUnstake") t = await min.batchUnstake(job.ids);
+    else if (job.type === "claim") t = await min.claim(job.ids);
+    else if (job.type === "batchMint") t = await circ.batchMint(job.ids);
+    else if (job.type === "batchAssemble") t = await circ.batchAssemble(job.ids);
+    else if (job.type === "listPart") t = await mkt.batchListPart(job.partTypes, job.amounts, job.prices);
+    else if (job.type === "listPC") t = await mkt.batchListPC(job.tokenIds, job.prices);
+    else if (job.type === "delistPart") t = await mkt.delistPart(job.ids);
+    else if (job.type === "delistPC") t = await mkt.delistPC(job.ids);
+    job.tx = t.hash; job.state = "waiting";
+    renderQueue();
+    await t.wait();
+    job.state = "done";
+  } catch(e){
+    job.state = "fail"; job.err = humanErr(e);
+  }
+  queue.shift();
+  renderQueue();
+  setTimeout(function(){ runNext(done); }, 600);
+}
+function renderQueue(){
+  $("qCount").textContent = queue.length + " 项";
+  $("qStatus").textContent = queueAbort ? "已终止" : (queueRunning && queue.length ? "执行中…" : "空闲");
+  $("qBody").innerHTML = queue.map(function(j, i){
+    var desc = jobDesc(j);
+    var st = j.state === "done" ? "✓ 完成" : j.state === "fail" ? "✗ " + (j.err || "失败") : j.state === "run" ? "签名/执行中…" : "排队";
+    return '<div class="q-item ' + (j.state === "done" ? "done" : j.state === "fail" ? "fail" : j.state === "run" ? "run" : "") + '">' +
+      '<span class="no">' + (i + 1) + '</span><span class="desc">' + desc + '</span>' +
+      (j.tx ? '<span class="mono">' + j.tx.slice(0, 10) + "…" + '</span>' : '') +
+      '<span class="st2">' + st + '</span></div>';
+  }).join("");
+}
+function jobDesc(j){
+  if (j.type === "batchStake") return "批量质押 " + (j.ids || []).length + " 台";
+  if (j.type === "batchUnstake") return "批量解压 " + (j.ids || []).length + " 台";
+  if (j.type === "claim") return "领取奖励 " + (j.ids || []).length + " 台";
+  if (j.type === "batchMint") return "批量铸造 " + (j.ids || []).length + " 台";
+  if (j.type === "batchAssemble") return "批量组装 " + (j.ids || []).length + " 台";
+  if (j.type === "listPart") return "批量挂单部件 " + (j.amounts || []).length + " 项";
+  if (j.type === "listPC") return "批量挂单 PC " + (j.tokenIds || []).length + " 台";
+  if (j.type === "delistPart") return "撤单部件 " + (j.ids || []).length + " 项";
+  if (j.type === "delistPC") return "撤单 PC " + (j.ids || []).length + " 项";
+  return j.type;
+}
+$("qAbort").addEventListener("click", function(){ queueAbort = true; toast("已终止后序全部", true); });
+
+/* ================= 铸造 ================= */
+var mintNum = 1;
+$("mintDec").addEventListener("click", function(){ mintNum = Math.max(1, mintNum - 1); $("mintNum").textContent = mintNum; updateMintFee(); });
+$("mintInc").addEventListener("click", function(){ mintNum = Math.min(10, mintNum + 1); $("mintNum").textContent = mintNum; updateMintFee(); });
+async function updateMintFee(){
+  try {
+    var circ = new ethers.Contract(ADDRS.circuit, ABI.circuit, makePub());
+    var fee = await circ.mintFee();
+    $("mintFeeInfo").textContent = fmt(fee) + " XCHIP";
+    var pid = Number($("mintPid").value);
+    $("mintFeeCalc").textContent = fmt(fee * BigInt(mintNum));
+    var xchip = new ethers.Contract(ADDRS.xchip, ABI.xchip, makePub());
+    if (account){ var b = await xchip.balanceOf(account); $("mintXchip").textContent = fmt(b); }
+  } catch(e){}
+}
+$("mintPid").addEventListener("change", updateMintFee);
+$("mintGo").addEventListener("click", function(){
+  if (!signer){ toast("请先连接钱包", false); return; }
+  var pid = Number($("mintPid").value);
+  var n = mintNum;
+  queueRun([{ type: "batchMint", ids: Array(n).fill(pid) }], function(){ toast("铸造完成", true); readAssets(); });
+});
+var asmNum = 1;
+$("asmDec").addEventListener("click", function(){ asmNum = Math.max(1, asmNum - 1); $("asmNum").textContent = asmNum; });
+$("asmInc").addEventListener("click", function(){ asmNum = Math.min(10, asmNum + 1); $("asmNum").textContent = asmNum; });
+$("asmGo").addEventListener("click", function(){
+  if (!signer){ toast("请先连接钱包", false); return; }
+  var pid = Number($("asmPid").value);
+  var n = asmNum;
+  queueRun([{ type: "batchAssemble", ids: Array(n).fill(pid) }], function(){ toast("组装完成", true); readAssets(); });
+});
+
+/* ================= 迁移 ================= */
+$("migrateBtn").addEventListener("click", function(){
+  if (!signer){ toast("请先连接钱包", false); return; }
+  showModal(
+    '<h3>迁移旧矿机到 V6</h3>' +
+    '<div class="hint">旧合约矿机（V4/V6）迁移到新 V6 合约。质押中的旧矿机需先解压。输入旧合约地址与矿机 ID。</div>' +
+    '<div class="m-row"><label>旧合约地址</label><input id="migOldAddr" placeholder="0x…"></div>' +
+    '<div class="m-row"><label>矿机 ID（逗号分隔）</label><input id="migIds" placeholder="如 1,2,3"></div>' +
+    '<div class="m-ops"><button class="btn ghost" onclick="closeModal()">取消</button><button class="btn" onclick="doMigrate()">迁移</button></div>'
+  );
+});
+async function doMigrate(){
+  var oldAddr = $("migOldAddr").value.trim();
+  var ids = $("migIds").value.split(/[,，\s]+/).filter(Boolean).map(Number);
+  if (!oldAddr || !ids.length){ toast("参数不完整", false); return; }
+  closeModal();
+  try {
+    var circ = new ethers.Contract(ADDRS.circuit, ABI.circuit, signer);
+    var t = await circ.migratePCs(ids, oldAddr);
+    toast("迁移提交：" + t.hash.slice(0, 10) + "…", true);
+    await t.wait();
+    toast("迁移成功", true);
+    readAssets();
+  } catch(e){ toast(humanErr(e), false); }
+}
+
+/* ================= 市场 ================= */
+$("mktPartList").addEventListener("click", function(){
+  if (!signer){ toast("请先连接钱包", false); return; }
+  var pt = Number($("mktPartType").value);
+  var price = parseFloat($("mktPartPrice").value);
+  var amt = parseInt($("mktPartAmt").value);
+  if (!price || !amt || amt < 1){ toast("填写价格与数量", false); return; }
+  var priceWei = ethers.parseEther(String(price));
+  // 需要授权
+  approvePartIfNeeded(ADDRS.market).then(function(){
+    queueRun([{ type: "listPart", partTypes: [pt], amounts: [amt], prices: [priceWei] }], function(){ toast("挂单成功", true); loadMarket(); });
+  });
+});
+$("mktPcList").addEventListener("click", function(){
+  if (!signer){ toast("请先连接钱包", false); return; }
+  var ids = Object.keys(selPcs).map(Number);
+  if (!ids.length){ toast("先在 My 页选中待机 PC", false); return; }
+  var price = parseFloat($("mktPcPrice").value);
+  if (!price){ toast("填写价格", false); return; }
+  var priceWei = ethers.parseEther(String(price));
+  queueRun([{ type: "listPC", tokenIds: ids, prices: ids.map(function(){ return priceWei; }) }], function(){ toast("挂单成功", true); loadMarket(); });
+});
+$("mktPcRefresh").addEventListener("click", loadMarket);
+
+async function approvePartIfNeeded(spender){
+  var part = new ethers.Contract(ADDRS.partToken, ABI.part, signer);
+  var ok = await part.isApprovedForAll(account, spender);
+  if (!ok){
+    var t = await part.setApprovalForAll(spender, true);
+    toast("授权部件中…", true);
+    await t.wait();
+  }
+}
+async function loadMarket(){
+  try {
+    var pub = makePub();
+    var mkt = new ethers.Contract(ADDRS.market, ABI.market, pub);
+    var circ = new ethers.Contract(ADDRS.circuit, ABI.circuit, pub);
+    var nP = Number(await mkt.partOrderCount());
+    var nC = Number(await mkt.pcOrderCount());
+    var rows = [];
+    var start = Math.max(1, nP - 39);
+    for (var i = start; i <= nP; i++){
+      var o = await mkt.partOrders(i);
+      if (o.active) rows.push({ id: i, o: o });
+    }
+    $("partOrdersBox").innerHTML = rows.length
+      ? '<table class="tbl"><tr><th>#</th><th>部件</th><th>数量</th><th>单价</th><th>卖家</th><th></th></tr>' +
+        rows.map(function(r){
+          return '<tr><td>' + r.id + '</td><td>' + PARTS[Number(r.o.partType) - 1] + '</td><td><b>' + r.o.amount + '</b></td><td>' + fmt(r.o.price) + '</td><td class="mono">' + addrShort(r.o.seller) + '</td>' +
+            '<td><button class="btn purple sm" onclick="buyPart(' + r.id + ')">购买</button></td></tr>';
+        }).join('') + '</table>'
+      : '<div class="empty">暂无部件挂单</div>';
+    var rows2 = [];
+    var start2 = Math.max(1, nC - 39);
+    for (var i = start2; i <= nC; i++){
+      var o = await mkt.pcOrders(i);
+      if (o.active) rows2.push({ id: i, o: o });
+    }
+    $("pcOrdersBox").innerHTML = rows2.length
+      ? '<table class="tbl"><tr><th>#</th><th>PC</th><th>价格</th><th>卖家</th><th></th></tr>' +
+        rows2.map(function(r){
+          return '<tr><td>' + r.id + '</td><td>#' + r.o.tokenId + '</td><td><b>' + fmt(r.o.price) + '</b></td><td class="mono">' + addrShort(r.o.seller) + '</td>' +
+            '<td><button class="btn purple sm" onclick="buyPC(' + r.id + ')">购买</button></td></tr>';
+        }).join('') + '</table>'
+      : '<div class="empty">暂无 PC 挂单</div>';
+    // 我的挂单撤单
+    if (account){
+      var mineP = rows.filter(function(r){ return r.o.seller.toLowerCase() === account; });
+      var mineC = rows2.filter(function(r){ return r.o.seller.toLowerCase() === account; });
+      if (mineP.length || mineC.length){
+        var tip = '<div class="hint" style="margin-top:8px">我的挂单：' +
+          mineP.map(function(r){ return '<button class="btn ghost sm" style="margin:2px" onclick="delistPart(' + r.id + ')">撤单部件#' + r.id + '</button>'; }).join('') +
+          mineC.map(function(r){ return '<button class="btn ghost sm" style="margin:2px" onclick="delistPC(' + r.id + ')">撤单PC#' + r.id + '</button>'; }).join('') + '</div>';
+        $("partOrdersBox").insertAdjacentHTML("beforeend", tip);
+      }
+    }
+    // 我的挂单标记（My 页显示）
+    window.__listed = {};
+    rows2.forEach(function(r){ window.__listed[Number(r.o.tokenId)] = 1; });
+  } catch(e){ console.warn("market", e); }
+}
+async function buyPart(id){
+  if (!signer){ toast("请先连接钱包", false); return; }
+  try {
+    var pub = makePub(); var mkt = new ethers.Contract(ADDRS.market, ABI.market, pub);
+    var o = await mkt.partOrders(id);
+    var xchip = new ethers.Contract(ADDRS.xchip, ABI.xchip, signer);
+    var need = o.price * 1n;
+    var bal = await xchip.balanceOf(account);
+    if (bal < need){ toast("XCHIP 不足", false); return; }
+    var mktS = new ethers.Contract(ADDRS.market, ABI.market, signer);
+    var t = await mktS.buyPart(id, 1);
+    toast("购买提交：" + t.hash.slice(0, 10) + "…", true);
+    await t.wait();
+    toast("购买成功", true);
+    loadMarket(); readAssets();
+  } catch(e){ toast(humanErr(e), false); }
+}
+async function buyPC(id){
+  if (!signer){ toast("请先连接钱包", false); return; }
+  try {
+    var mktS = new ethers.Contract(ADDRS.market, ABI.market, signer);
+    var t = await mktS.buyPC(id);
+    toast("购买提交：" + t.hash.slice(0, 10) + "…", true);
+    await t.wait();
+    toast("购买成功", true);
+    loadMarket(); readAssets();
+  } catch(e){ toast(humanErr(e), false); }
+}
+async function delistPart(id){
+  if (!signer){ return; }
+  try { var mktS = new ethers.Contract(ADDRS.market, ABI.market, signer); var t = await mktS.delistPart([id]); await t.wait(); toast("已撤单", true); loadMarket(); } catch(e){ toast(humanErr(e), false); }
+}
+async function delistPC(id){
+  if (!signer){ return; }
+  try { var mktS = new ethers.Contract(ADDRS.market, ABI.market, signer); var t = await mktS.delistPC([id]); await t.wait(); toast("已撤单", true); loadMarket(); } catch(e){ toast(humanErr(e), false); }
+}
+
+/* ================= 盲盒 ================= */
+async function loadBox(){
+  try {
+    var pub = makePub();
+    var box = new ethers.Contract(ADDRS.tapeOut, ABI.tapeOut, pub);
+    var n = Number(await box.boxCount());
+    $("boxCreateFee").textContent = fmt(await box.createFee()) + " XCHIP";
+    var rows = [];
+    var start = Math.max(1, n - 19);
+    for (var i = start; i <= n; i++){
+      var b = await box.boxes(i);
+      rows.push({ id: i, b: b });
+    }
+    $("boxList").innerHTML = rows.length
+      ? '<table class="tbl"><tr><th>#</th><th>单价</th><th>进度</th><th>创建者</th><th></th></tr>' +
+        rows.map(function(r){
+          var left = Number(r.b.total) - Number(r.b.sold);
+          return '<tr><td>' + r.id + '</td><td><b>' + fmt(r.b.price) + '</b></td><td>' + r.b.sold + '/' + r.b.total + '</td><td class="mono">' + addrShort(r.b.creator) + '</td>' +
+            '<td><button class="btn purple sm" ' + (left > 0 ? '' : 'disabled') + ' onclick="openBox(' + r.id + ')">开盒</button></td></tr>';
+        }).join('') + '</table>'
+      : '<div class="empty">暂无盲盒</div>';
+  } catch(e){ console.warn("box", e); }
+}
+$("boxCreate").addEventListener("click", function(){
+  if (!signer){ toast("请先连接钱包", false); return; }
+  var price = parseFloat($("boxPrice").value);
+  var total = parseInt($("boxTotal").value);
+  if (!price || !total || total < 1 || total > 100000){ toast("填写单价与盒数（≤100000）", false); return; }
+  var wStr = $("boxWeights").value.trim();
+  var weights = [0,0,0,0,0,0,0,0];
+  if (wStr){
+    var arr = wStr.split(/[,，\s]+/).filter(Boolean).map(Number);
+    if (arr.length === 8 && arr.every(function(x){ return x > 0; })) weights = arr;
+    else { toast("权重需 8 个正数", false); return; }
+  }
+  try {
+    var box = new ethers.Contract(ADDRS.tapeOut, ABI.tapeOut, signer);
+    box.createBox(ethers.parseEther(String(price)), total, weights).then(function(t){
+      toast("创建提交：" + t.hash.slice(0, 10) + "…", true);
+      return t.wait();
+    }).then(function(){ toast("盲盒创建成功", true); loadBox(); }).catch(function(e){ toast(humanErr(e), false); });
+  } catch(e){ toast(humanErr(e), false); }
+});
+async function openBox(id){
+  if (!signer){ toast("请先连接钱包", false); return; }
+  showModal(
+    '<h3>开盲盒 #' + id + '</h3>' +
+    '<div class="m-row"><label>数量</label><div class="stepper"><button id="boxNDec">−</button><div class="num" id="boxN">1</div><button id="boxNInc">+</button></div></div>' +
+    '<div class="m-ops"><button class="btn ghost" onclick="closeModal()">取消</button><button class="btn" onclick="doOpenBox(' + id + ')">开盒</button></div>'
+  );
+  var n = 1;
+  $("boxNDec").onclick = function(){ n = Math.max(1, n - 1); $("boxN").textContent = n; };
+  $("boxNInc").onclick = function(){ n = Math.min(10, n + 1); $("boxN").textContent = n; };
+  window.__boxN = function(){ return n; };
+}
+async function doOpenBox(id){
+  closeModal();
+  var n = (window.__boxN && window.__boxN()) || 1;
+  try {
+    var box = new ethers.Contract(ADDRS.tapeOut, ABI.tapeOut, signer);
+    var t = await box.openBox(id, n);
+    toast("开盒提交：" + t.hash.slice(0, 10) + "…", true);
+    await t.wait();
+    toast("获得部件！", true);
+    loadBox(); readAssets();
+  } catch(e){ toast(humanErr(e), false); }
+}
+
+/* ================= 导航 / 弹窗 ================= */
+function showPage(p){
+  document.querySelectorAll(".page").forEach(function(el){ el.classList.remove("on"); });
+  document.querySelectorAll("#nav button, #footNav button").forEach(function(el){ el.classList.remove("on"); });
+  $("page-" + p).classList.add("on");
+  document.querySelectorAll('#nav button[data-page="' + p + '"], #footNav button[data-page="' + p + '"]').forEach(function(el){ el.classList.add("on"); });
+  if (p === "market") loadMarket();
+  if (p === "box") loadBox();
+}
+document.querySelectorAll("#nav button, #footNav button").forEach(function(btn){
+  btn.addEventListener("click", function(){ showPage(this.dataset.page); });
+});
+function showModal(html){ $("modalBox").innerHTML = html; $("modal").classList.add("show"); }
+function closeModal(){ $("modal").classList.remove("show"); }
+$("modal").addEventListener("click", function(e){ if (e.target === this) closeModal(); });
+
+/* ================= 初始化 ================= */
+function renderAll(){ readAssets(); updateMintFee(); }
+if (hasWallet()){ $("walletBtn").textContent = "连接钱包"; }
+else { $("walletBtn").textContent = "无钱包"; }
+renderRpcDiag();
+setInterval(function(){ if (signer && account) readAssets(); }, 60000);
+</script>
+</body>
+</html>
