@@ -196,6 +196,8 @@ main{
 .sub{color:var(--tx2);font-size:13px;line-height:1.7;margin:0 0 14px}
 .hint{color:var(--mut);font-size:12px;line-height:1.7;margin:12px 0 0}
 .mono{font-family:var(--mono)}
+#rpcDiag{display:flex!important;flex-wrap:wrap;gap:3px 10px;margin:6px 0 0;font-size:11px;line-height:1.6}
+#rpcDiag span{margin-right:0!important}
 
 /* ===== 按钮 ===== */
 .action-btn{
@@ -764,11 +766,13 @@ main{grid-template-columns:1fr 400px}
 .bx-w-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 /* 分红：平台分红单格全宽 */
 #fsStats{grid-template-columns:1fr}
-/* 市场表单：单价/数量输入紧凑 */
-.pm-sec{grid-template-columns:1fr 90px 90px}
-.pm-sell .mk-row{flex-wrap:nowrap}
+/* 市场表单：单价/数量输入紧凑（仅表单行网格，容器保持纵向流） */
+.pm-sec{display:block}
+.pm-sell .mk-row{display:grid;grid-template-columns:1fr 90px 90px;gap:8px;flex-wrap:nowrap}
+.pm-sell .mk-row .mk-field{min-width:0}
 @media (max-width:640px){
-  .pm-sec{grid-template-columns:1fr}
+  .pm-sell .mk-row{grid-template-columns:1fr}
+  .pm-sec{display:block}
   #pmList li{grid-template-columns:1fr 66px 40px 88px auto}
   #pmList li>span:nth-child(4){display:none}
   #pmMineList li{grid-template-columns:1fr 66px 40px auto}
